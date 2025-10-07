@@ -73,8 +73,8 @@ function main() {
     // Expected output for easy/problem-1
     const expectedOutput = {
         "nombre_evento": "Feria de empleo",
-        "fecha": "2025-10-17",
-        "hora_inicio": "15:00",
+        "fecha_iso": "2025-10-17",
+        "hora_inicio_24h": "15:00",
         "ciudad": "Montevideo",
         "stand": "21",
         "email_contacto": "people@crunchloop.io"
