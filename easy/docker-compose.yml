@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  evaluator:
+    build: .
+    image: easy-evaluator:latest
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./evaluation-scripts:/app/evaluation-scripts:ro
+    network_mode: none  # No network access needed for evaluation
