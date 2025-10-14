@@ -14,7 +14,9 @@ Nos vemos en la Feria de empleo de la ORT este jueves 17/10 a las 3 pm. Lugar: F
 ```
 
 ## Salida requerida
-Tu respuesta debe ser exactamente un JSON con la siguiente estructura y keys:
+Debes guardar tu respuesta en formato JSON en el archivo: `easy/outputs/problem-1-output.json`
+
+El archivo debe contener exactamente la siguiente estructura y keys:
 
 ```json
 {
@@ -30,9 +32,10 @@ Tu respuesta debe ser exactamente un JSON con la siguiente estructura y keys:
 ## Notas importantes
 - La fecha debe estar en formato ISO (YYYY-MM-DD)
 - La hora debe estar en formato 24 horas (HH:MM)
-- Asume que el a�o es 2025 si no se especifica
-- Responde SOLO con el JSON, sin explicaciones adicionales
+- Asume que el año es 2025 si no se especifica
+- El archivo debe contener SOLO el JSON, sin explicaciones adicionales
+- Guarda el archivo en: `easy/outputs/problem-1-output.json`
 
 ## Evaluación
 Este problema será evaluado automáticamente usando el script: `easy/evaluation-scripts/problem-1.js`
-El script verificará que tu salida contenga exactamente las keys esperadas con los valores correctos.
+El script leerá el archivo `easy/outputs/problem-1-output.json` y verificará que contenga exactamente las keys esperadas con los valores correctos.

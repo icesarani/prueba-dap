@@ -70,45 +70,48 @@ function evaluateJsonResponse(studentOutput, expectedOutput) {
 }
 
 function main() {
+    const fs = require('fs');
+    const path = require('path');
+
     // Expected output for easy/problem-1
     const expectedOutput = {
         "nombre_evento": "Feria de empleo",
-        "fecha": "2025-10-17",
-        "hora_inicio": "15:00",
+        "fecha_iso": "2025-10-17",
+        "hora_inicio_24h": "15:00",
         "ciudad": "Montevideo",
         "stand": "21",
         "email_contacto": "people@crunchloop.io"
     };
 
-    // Read student output from stdin
-    let studentOutput = '';
+    // Path to the student's output file
+    const outputFilePath = path.join(__dirname, '..', 'outputs', 'problem-1-output.json');
 
-    process.stdin.setEncoding('utf8');
-
-    process.stdin.on('data', (chunk) => {
-        studentOutput += chunk;
-    });
-
-    process.stdin.on('end', () => {
-        // Evaluate the response
-        const { passed } = evaluateJsonResponse(studentOutput, expectedOutput);
-
-        // Output JSON result
-        const result = {
-            "problem": "problem-1",
-            "passed": passed
-        };
-
-        console.log(JSON.stringify(result, null, 2));
-
-        // Exit with appropriate code (0 for pass, 1 for fail)
-        process.exit(passed ? 0 : 1);
-    });
-
-    process.stdin.on('error', (err) => {
-        console.error(`ERROR: Failed to read input - ${err.message}`);
+    // Read student output from file
+    let studentOutput;
+    try {
+        if (!fs.existsSync(outputFilePath)) {
+            console.error(`ERROR: Output file not found at ${outputFilePath}`);
+            process.exit(1);
+        }
+        studentOutput = fs.readFileSync(outputFilePath, 'utf8');
+    } catch (err) {
+        console.error(`ERROR: Failed to read output file - ${err.message}`);
         process.exit(1);
-    });
+    }
+
+    // Evaluate the response
+    const { passed } = evaluateJsonResponse(studentOutput, expectedOutput);
+
+    // Output JSON result
+    const result = {
+        "problem": "problem-1",
+        "passed": passed
+    };
+
+    console.log(JSON.stringify(result, null, 2));
+
+    // Exit with appropriate code (0 for pass, 1 for fail)
+    process.exit(passed ? 0 : 1);
 }
 
 // Run the evaluation
