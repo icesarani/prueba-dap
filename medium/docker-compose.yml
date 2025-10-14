@@ -1,0 +1,47 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql-practice-db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./scripts:/scripts
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd -Q "SELECT 1" -C || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - sql-practice-network
+
+  testrunner:
+    build:
+      context: ./TestRunner
+      dockerfile: Dockerfile
+    container_name: sql-practice-testrunner
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      - SQL_SERVER=sqlserver
+    volumes:
+      - ./users:/app/users:ro
+      - ./solution-script:/app/solution-script:ro
+      - ./results:/app/results
+    networks:
+      - sql-practice-network
+    profiles:
+      - test
+
+volumes:
+  sqlserver_data:
+
+networks:
+  sql-practice-network:
+    driver: bridge
