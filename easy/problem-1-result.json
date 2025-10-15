@@ -1,0 +1,14 @@
+{
+  "problem": "problem-1",
+  "passed": false,
+  "error": "Student did not provide JSON output in their prompt. The student provided the instruction text but did not include their extracted JSON solution.",
+  "expected_format": {
+    "nombre_evento": "Feria de empleo",
+    "fecha_iso": "2025-10-17",
+    "hora_inicio_24h": "15:00",
+    "ciudad": "Montevideo",
+    "stand": "21",
+    "email_contacto": "people@crunchloop.io"
+  },
+  "instructions": "The student should provide their JSON extraction result in the prompt, not just the source text to be processed."
+}
