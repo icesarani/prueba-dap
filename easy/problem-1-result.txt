@@ -1,0 +1,106 @@
+===============================================
+DAP-ORT EVALUATION RESULTS
+===============================================
+
+Problem: easy/problem-1 (Caza de Datos)
+Status: FAILED ❌
+Date: 2025-01-13
+
+===============================================
+STUDENT SUBMISSION
+===============================================
+
+Prompt:
+"Extrae los datos del siguiente texto en formato json del siguiente texto que contengan las keys 'nombre', 'fecha', 'hora', 'ciudad', 'stand', 'contacto'"
+
+Generated Output:
+{
+    "nombre": "Feria de empleo de la ORT",
+    "fecha": "17/10",
+    "hora": "3 pm",
+    "ciudad": "Montevideo",
+    "stand": "21",
+    "contacto": "people@crunchloop.io"
+}
+
+===============================================
+EVALUATION RESULTS
+===============================================
+
+PASSED: false
+SCORE: 2/6 fields correct
+
+===============================================
+ERRORS DETECTED
+===============================================
+
+❌ MISSING KEY: 'nombre_evento' not found in response
+   - You used: 'nombre'
+   - Expected: 'nombre_evento'
+
+❌ MISSING KEY: 'fecha_iso' not found in response
+   - You used: 'fecha'
+   - Expected: 'fecha_iso' in format YYYY-MM-DD
+
+❌ MISSING KEY: 'hora_inicio_24h' not found in response
+   - You used: 'hora'
+   - Expected: 'hora_inicio_24h' in 24-hour format (HH:MM)
+
+❌ MISSING KEY: 'email_contacto' not found in response
+   - You used: 'contacto'
+   - Expected: 'email_contacto'
+
+⚠️ WARNING: Extra keys found: nombre, fecha, hora, contacto
+
+===============================================
+EXPECTED OUTPUT
+===============================================
+
+{
+    "nombre_evento": "Feria de empleo",
+    "fecha_iso": "2025-10-17",
+    "hora_inicio_24h": "15:00",
+    "ciudad": "Montevideo",
+    "stand": "21",
+    "email_contacto": "people@crunchloop.io"
+}
+
+===============================================
+RECOMMENDATIONS
+===============================================
+
+1. ⚠️ READ THE PROBLEM STATEMENT CAREFULLY
+   The problem specifies EXACT key names that must be used:
+   - "nombre_evento" (not "nombre")
+   - "fecha_iso" (not "fecha")
+   - "hora_inicio_24h" (not "hora")
+   - "email_contacto" (not "contacto")
+
+2. 📅 FORMAT DATES CORRECTLY
+   - Your output: "17/10"
+   - Expected: "2025-10-17" (ISO format: YYYY-MM-DD)
+   - Assume year 2025 when not specified
+
+3. 🕐 FORMAT TIME CORRECTLY
+   - Your output: "3 pm"
+   - Expected: "15:00" (24-hour format: HH:MM)
+   - Convert 3 pm to 15:00
+
+4. ✅ VALUE EXTRACTION
+   - "nombre_evento" should be "Feria de empleo" (not the full text)
+   - "ciudad" and "stand" were correct!
+   - "email_contacto" value is correct, just needs the right key
+
+===============================================
+LEARNING POINTS
+===============================================
+
+This problem teaches the importance of:
+- Reading specifications carefully
+- Using exact key names as required
+- Following date/time formatting standards (ISO 8601)
+- Extracting precise information (not extra words)
+
+Try again with the correct key names and formats!
+
+===============================================
