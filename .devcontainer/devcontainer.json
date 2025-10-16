@@ -1,0 +1,19 @@
+{
+  "name": "dap-workspace",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers-extra/features/apt-packages:1": {
+      "packages": [
+        "curl",
+        "wget",
+        "git"
+      ]
+    },
+    "ghcr.io/crunchloop/dap/devcontainers-features/dap:latest": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": []
+    }
+  }
+}
