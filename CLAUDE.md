@@ -10,16 +10,20 @@ dap-ort-fair-challenges/
 │   └── agents/
 │       └── dap-ort.md          # Main evaluation agent
 ├── easy/                        # Easy level problems
-│   ├── problem-1.md            # Data extraction from event text
-│   ├── problem-2.md            # Order details extraction
-│   ├── problem-3.md            # Medical appointment extraction
+│   ├── problems/
+│   │   ├── problem-1.md        # Data extraction from event text
+│   │   ├── problem-2.md        # Order details extraction
+│   │   └── problem-3.md        # Medical appointment extraction
 │   ├── evaluation-scripts/     # Evaluation scripts for easy level
 │   │   ├── problem-1.js        # Evaluator for problem-1
 │   │   ├── problem-2.js        # Evaluator for problem-2
 │   │   └── problem-3.js        # Evaluator for problem-3
+│   ├── users/                  # Student JSON submissions
+│   ├── results/                # Evaluation results output
 │   ├── Dockerfile              # Docker container for easy evaluations
 │   ├── docker-compose.yml      # Docker compose configuration
-│   └── evaluate.sh             # Script to run evaluations
+│   ├── evaluate.sh             # Script to run evaluations
+│   └── INSTRUCTION.md          # Detailed evaluation instructions
 ├── medium/                      # Medium level SQL problems
 │   ├── problems/
 │   │   ├── problem_1.md        # Top Customers by Revenue
@@ -108,11 +112,12 @@ Dame los 5 clientes que más gastaron en órdenes completadas
 
 ### Easy Level Workflow
 1. **Student submits prompt** with level and variant tags
-2. **Agent reads problem file** from `{level}/{variant}.md`
-3. **Agent extracts student output** from the prompt
-4. **Runs evaluation script** at `{level}/evaluation-scripts/{variant}.js`
-5. **Returns results** with score and detailed feedback
-6. **Saves results** to `{level}/{variant}-result.txt`
+2. **Agent reads problem file** from `easy/problems/{variant}.md`
+3. **Agent generates JSON output** by executing the student's prompt literally
+4. **Agent saves JSON** to `easy/users/{variant}_student@example.com.json`
+5. **Runs evaluation script** via docker-compose at `easy/evaluation-scripts/{variant}.js`
+6. **Returns results** with score and detailed feedback
+7. **Saves results** to `easy/results/{variant}_result.json`
 
 ### Medium Level Workflow (SQL)
 1. **Student submits natural language prompt** describing the SQL query they want
@@ -192,7 +197,7 @@ make clean
 
 ### Easy Level Problems
 
-1. **Create problem file**: `{level}/problem-{n}.md`
+1. **Create problem file**: `easy/problems/problem-{n}.md`
    - Include clear instructions
    - Provide input text/context
    - Show expected output format
@@ -237,15 +242,15 @@ make clean
 
 ## Running Evaluations
 
-### Easy Level (Docker-based)
-The easy level uses Docker containers for evaluation, so Node.js is not required on the host machine.
+### Easy Level (Docker Compose)
+The easy level uses Docker Compose for evaluation, so Node.js is not required on the host machine.
 
 #### Setup (first time only):
 ```bash
 cd easy
 
-# Build the Docker image
-docker build -t easy-evaluator:latest .
+# Build the Docker image using docker-compose
+docker-compose build
 
 # Make the evaluation script executable
 chmod +x evaluate.sh
@@ -255,9 +260,16 @@ chmod +x evaluate.sh
 ```bash
 cd easy
 
-# Usage: ./evaluate.sh <variant> '<student_output>'
-./evaluate.sh problem-1 '{"nombre_evento": "Feria de empleo", "fecha_iso": "2025-10-17", "hora_inicio_24h": "15:00", "ciudad": "Montevideo", "stand": "21", "email_contacto": "people@crunchloop.io"}'
+# Usage: ./evaluate.sh <variant> <file_path>
+./evaluate.sh problem-1 users/problem-1_student@example.com.json
 ```
+
+The script:
+- Checks if Docker is running
+- Checks if docker-compose is installed
+- Reads JSON from the users directory
+- Runs evaluation via docker-compose
+- Outputs results to stdout
 
 ### Medium Level (Docker-based SQL)
 The medium level uses Docker for SQL Server and test execution.
@@ -298,7 +310,11 @@ make test-problem-1
 ### Easy Level
 - **Container**: Node.js Alpine-based image
 - **Purpose**: Run evaluation scripts in isolated environment
-- **Volumes**: Evaluation scripts mounted read-only
+- **Volumes**:
+  - Evaluation scripts mounted read-only
+  - Users directory mounted read-only
+- **Orchestration**: docker-compose with test profile
+- **Network**: None (no network access needed)
 
 ### Medium Level
 The medium level uses a containerized environment for consistent SQL evaluation:
@@ -322,9 +338,10 @@ The medium level uses a containerized environment for consistent SQL evaluation:
 ## File Naming Conventions
 
 ### Easy Level
-- Problems: `problem-{n}.md` (with hyphen)
-- Evaluation scripts: `problem-{n}.js` (with hyphen)
-- Results: `problem-{n}-result.txt` (with hyphen)
+- Problems: `problems/problem-{n}.md` (with hyphen)
+- Evaluation scripts: `evaluation-scripts/problem-{n}.js` (with hyphen)
+- User files: `users/problem-{n}_student@example.com.json` (with underscores)
+- Results: `results/problem-{n}_result.json` (with underscores)
 
 ### Medium Level
 - Problems: `problem-{n}.md` (with underscore)

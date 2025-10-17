@@ -1,37 +1,60 @@
 #!/bin/bash
 
 # Script to run easy level evaluations in Docker container
-# Usage: ./evaluate.sh <variant>
-# Example: ./evaluate.sh problem-1
+# Usage: ./evaluate.sh <variant> <file_path>
 #
-# Note: The script expects the student output to be in easy/outputs/<variant>-output.json
+# Example:
+#   ./evaluate.sh problem-1 users/problem-1_student@example.com.json
 
 VARIANT=$1
+FILE_PATH=$2
 
-if [ -z "$VARIANT" ]; then
-    echo "Usage: $0 <variant>"
-    echo "Example: $0 problem-1"
+if [ -z "$VARIANT" ] || [ -z "$FILE_PATH" ]; then
+    echo "Usage: $0 <variant> <file_path>"
     echo ""
-    echo "The script will read from: easy/outputs/${VARIANT}-output.json"
+    echo "Example:"
+    echo "  $0 problem-1 users/problem-1_student@example.com.json"
     exit 1
 fi
 
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Check if output file exists
-OUTPUT_FILE="$SCRIPT_DIR/outputs/${VARIANT}-output.json"
-if [ ! -f "$OUTPUT_FILE" ]; then
-    echo "ERROR: Output file not found at $OUTPUT_FILE"
-    echo "Please create the output file first with your solution."
+# Check if Docker is running
+if ! docker info > /dev/null 2>&1; then
+    echo "ERROR: Docker is not running or not installed"
+    echo ""
+    echo "Please ensure Docker Desktop is running and try again."
+    echo "Visit https://www.docker.com/get-started for installation instructions."
     exit 1
 fi
 
-# Build the Docker image if needed (from the easy directory)
-cd "$SCRIPT_DIR" && docker build -t easy-evaluator:latest . > /dev/null 2>&1
+# Check if docker-compose is available
+if ! command -v docker-compose &> /dev/null; then
+    echo "ERROR: docker-compose is not installed"
+    echo ""
+    echo "Please install docker-compose and try again."
+    echo "Visit https://docs.docker.com/compose/install/ for installation instructions."
+    exit 1
+fi
 
-# Run the evaluation in container with outputs directory mounted
-docker run --rm \
-    -v "$SCRIPT_DIR/outputs:/app/outputs:ro" \
-    easy-evaluator:latest \
-    "/app/evaluation-scripts/$VARIANT.js"
+# Make path absolute if relative
+if [[ "$FILE_PATH" != /* ]]; then
+    FILE_PATH="$SCRIPT_DIR/$FILE_PATH"
+fi
+
+# Check if file exists
+if [ ! -f "$FILE_PATH" ]; then
+    echo "ERROR: File not found: $FILE_PATH"
+    exit 1
+fi
+
+# Build the Docker image if needed using docker-compose
+cd "$SCRIPT_DIR"
+docker-compose build > /dev/null 2>&1
+
+# Get the relative path from SCRIPT_DIR for docker volume mount
+RELATIVE_PATH="${FILE_PATH#$SCRIPT_DIR/}"
+
+# Run the evaluation using docker-compose
+cat "$FILE_PATH" | docker-compose --profile test run --rm evaluator "/app/evaluation-scripts/$VARIANT.js"

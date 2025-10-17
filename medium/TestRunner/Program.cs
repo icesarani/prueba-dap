@@ -131,51 +131,124 @@ public class SQLTestRunner
         }
     }
 
-    private (bool Passed, string Message) CompareResults(QueryResult userResults, QueryResult expectedResults)
+    private (bool Passed, double Score, string Message) CompareResults(QueryResult userResults, QueryResult expectedResults)
     {
         if (!userResults.Success)
-            return (false, $"Query execution failed: {userResults.Error}");
+            return (false, 0.0, $"Query execution failed: {userResults.Error}");
 
         if (!expectedResults.Success)
-            return (false, $"Expected solution failed: {expectedResults.Error}");
+            return (false, 0.0, $"Expected solution failed: {expectedResults.Error}");
 
         var userData = NormalizeResults(userResults.Data);
         var expectedData = NormalizeResults(expectedResults.Data);
 
         var userColumns = new HashSet<string>(userResults.Columns);
         var expectedColumns = new HashSet<string>(expectedResults.Columns);
+        
+        var score = 0.0;
+        var totalPoints = 0.0;
+        var messages = new List<string>();
 
-        if (!userColumns.SetEquals(expectedColumns))
+        totalPoints += 30;
+        if (userColumns.SetEquals(expectedColumns))
         {
-            return (false, $"Column mismatch. Expected: [{string.Join(", ", expectedResults.Columns)}], Got: [{string.Join(", ", userResults.Columns)}]");
+            score += 30;
+            messages.Add("✅ Column structure correct");
+        }
+        else
+        {
+            var missingColumns = expectedColumns.Except(userColumns);
+            var extraColumns = userColumns.Except(expectedColumns);
+            
+            if (missingColumns.Any())
+                messages.Add($"❌ Missing columns: [{string.Join(", ", missingColumns)}]");
+            if (extraColumns.Any())
+                messages.Add($"❌ Extra columns: [{string.Join(", ", extraColumns)}]");
+                
+            // Partial credit for having some correct columns
+            var correctColumns = userColumns.Intersect(expectedColumns).Count();
+            var partialScore = (double)correctColumns / expectedColumns.Count * 30;
+            score += partialScore;
+            messages.Add($"⚠️  Partial column credit: {correctColumns}/{expectedColumns.Count} columns correct");
         }
 
-        if (userData.Count != expectedData.Count)
+        totalPoints += 20;
+        if (userData.Count == expectedData.Count)
         {
-            return (false, $"Data mismatch. Expected {expectedData.Count} rows, got {userData.Count} rows");
+            score += 20;
+            messages.Add($"✅ Row count correct ({userData.Count} rows)");
         }
-
-        for (int i = 0; i < userData.Count; i++)
+        else
         {
-            var userRow = userData[i];
-            var expectedRow = expectedData[i];
-
-            foreach (var col in expectedResults.Columns)
+            messages.Add($"❌ Row count mismatch. Expected {expectedData.Count} rows, got {userData.Count} rows");
+            // Partial credit based on how close the row count is
+            if (expectedData.Count > 0)
             {
-                var userValue = userRow[col];
-                var expectedValue = expectedRow[col];
-
-                if (userValue == null && expectedValue == null)
-                    continue;
-                if (userValue == null || expectedValue == null)
-                    return (false, $"Data mismatch in column '{col}' at row {i + 1}");
-
-                if (!userValue.ToString()!.Equals(expectedValue.ToString()))
-                    return (false, $"Data mismatch in column '{col}' at row {i + 1}");
+                var rowRatio = Math.Min(1.0, (double)userData.Count / expectedData.Count);
+                var partialScore = rowRatio * 20;
+                score += partialScore;
+                messages.Add($"⚠️  Partial row count credit: {partialScore:F1}/20 points");
             }
         }
 
-        return (true, "Results match!");
+        // Data accuracy evaluation (50% of total score)
+        totalPoints += 50;
+        if (userData.Count > 0 && expectedData.Count > 0 && userColumns.Intersect(expectedColumns).Any())
+        {
+            var commonColumns = userColumns.Intersect(expectedColumns).ToList();
+            var maxRowsToCheck = Math.Min(userData.Count, expectedData.Count);
+            var totalCells = maxRowsToCheck * commonColumns.Count;
+            var correctCells = 0;
+
+            for (int i = 0; i < maxRowsToCheck; i++)
+            {
+                var userRow = userData[i];
+                var expectedRow = expectedData[i];
+
+                foreach (var col in commonColumns)
+                {
+                    var userValue = userRow.ContainsKey(col) ? userRow[col] : null;
+                    var expectedValue = expectedRow.ContainsKey(col) ? expectedRow[col] : null;
+
+                    if (userValue == null && expectedValue == null)
+                    {
+                        correctCells++;
+                        continue;
+                    }
+                    if (userValue != null && expectedValue != null && 
+                        userValue.ToString()!.Equals(expectedValue.ToString()))
+                    {
+                        correctCells++;
+                    }
+                }
+            }
+
+            if (totalCells > 0)
+            {
+                var dataAccuracy = (double)correctCells / totalCells;
+                var dataScore = dataAccuracy * 50;
+                score += dataScore;
+                messages.Add($"📊 Data accuracy: {correctCells}/{totalCells} cells correct ({dataAccuracy:P1})");
+                
+                if (dataAccuracy == 1.0)
+                    messages.Add("✅ All data values match!");
+                else if (dataAccuracy > 0.8)
+                    messages.Add($"⚠️  Minor data discrepancies detected");
+                else
+                    messages.Add($"❌ Significant data discrepancies detected");
+            }
+        }
+        else if (userData.Count == 0 && expectedData.Count == 0)
+        {
+            score += 50;
+            messages.Add("✅ Both queries return empty results (correct)");
+        }
+
+        var finalScore = Math.Round(score / totalPoints * 100, 1);
+        var passed = finalScore >= 70.0; // Consider 70% as passing threshold
+        
+        var message = string.Join(" | ", messages);
+        return (passed, finalScore, $"Score: {finalScore}% - {message}");
     }
 
     private (string? ProblemId, string? Email) ParseFilename(string filename)
@@ -244,13 +317,14 @@ public class SQLTestRunner
 
             var expectedResults = await ExecuteQueryAsync(conn, expectedQuery);
 
-            var (passed, message) = CompareResults(userResults, expectedResults);
+            var (passed, score, message) = CompareResults(userResults, expectedResults);
 
             var result = new TestResult
             {
                 Email = email,
                 ProblemId = problemId,
                 Passed = passed,
+                Score = score,
                 Message = message,
                 Timestamp = DateTime.Now,
                 UserFile = userFile
@@ -329,7 +403,20 @@ public class SQLTestRunner
         Console.WriteLine(new string('=', 60));
         var passed = allResults.Count(r => r.Passed);
         var failed = allResults.Count - passed;
-        Console.WriteLine($"Total: {allResults.Count} | Passed: {passed} | Failed: {failed}");
+        var averageScore = allResults.Count > 0 ? allResults.Average(r => r.Score) : 0;
+        
+        Console.WriteLine($"Total: {allResults.Count} | Passed (≥70%): {passed} | Failed (<70%): {failed}");
+        Console.WriteLine($"Average Score: {averageScore:F1}%");
+        
+        if (allResults.Count > 0)
+        {
+            Console.WriteLine("\n📊 Individual Scores:");
+            foreach (var result in allResults.OrderByDescending(r => r.Score))
+            {
+                var status = result.Passed ? "✅" : "❌";
+                Console.WriteLine($"   {status} {result.Email} - Problem {result.ProblemId}: {result.Score:F1}%");
+            }
+        }
         Console.WriteLine(new string('=', 60));
     }
 }
@@ -352,6 +439,9 @@ public class TestResult
 
     [JsonPropertyName("passed")]
     public bool Passed { get; set; }
+
+    [JsonPropertyName("score")]
+    public double Score { get; set; }
 
     [JsonPropertyName("message")]
     public string Message { get; set; } = "";

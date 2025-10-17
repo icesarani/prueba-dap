@@ -87,7 +87,7 @@ Learn to retrieve and analyze data from databases by describing what you need in
 3. Agent extracts student output from the prompt
 4. Docker-based evaluation script runs to compare output against expected results
 5. Agent returns score and detailed feedback
-6. Results saved to `{level}/{variant}-result.txt`
+6. Results saved to `easy/results/{problem}.json`
 
 ### Medium Level Workflow (SQL)
 1. Student submits natural language prompt describing the SQL query needed

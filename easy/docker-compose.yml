@@ -5,7 +5,10 @@ services:
     build: .
     image: easy-evaluator:latest
     stdin_open: true
-    tty: true
+    tty: false
     volumes:
       - ./evaluation-scripts:/app/evaluation-scripts:ro
+      - ./users:/app/users:ro
     network_mode: none  # No network access needed for evaluation
+    profiles:
+      - test

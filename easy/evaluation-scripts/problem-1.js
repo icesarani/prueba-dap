@@ -5,113 +5,164 @@
  * This script evaluates if the student's JSON output matches the expected format and values.
  */
 
-function evaluateJsonResponse(studentOutput, expectedOutput) {
-    const errors = [];
-    let score = 0;
-    const maxScore = Object.keys(expectedOutput).length;
-
-    // Step 1: Try to extract JSON from the output
-    let studentJson;
+/**
+ * Test 1: Parse and validate JSON format
+ */
+function testValidJsonFormat(studentOutput, errors) {
     try {
-        // Try to find JSON in the output (it might have extra text)
         const startIdx = studentOutput.indexOf('{');
         const endIdx = studentOutput.lastIndexOf('}');
 
         if (startIdx === -1 || endIdx === -1) {
             errors.push("ERROR: No JSON object found in the output");
-            return { passed: false, score: 0, errors };
+            return { passed: false, studentJson: null };
         }
 
         const jsonStr = studentOutput.substring(startIdx, endIdx + 1);
-        studentJson = JSON.parse(jsonStr);
+        const studentJson = JSON.parse(jsonStr);
+        return { passed: true, studentJson };
     } catch (e) {
         if (e instanceof SyntaxError) {
             errors.push(`ERROR: Invalid JSON format - ${e.message}`);
         } else {
             errors.push(`ERROR: Failed to parse output - ${e.message}`);
         }
-        return { passed: false, score: 0, errors };
+        return { passed: false, studentJson: null };
     }
+}
 
-    // Step 2: Check for required keys
-    const missingKeys = [];
-    for (const key in expectedOutput) {
-        if (!(key in studentJson)) {
-            missingKeys.push(key);
-            errors.push(`MISSING KEY: '${key}' not found in response`);
-        }
+/**
+ * Test 2: Check if the number of keys matches expected
+ */
+function testCorrectKeyCount(studentJson, expectedOutput, errors) {
+    const expectedKeyCount = Object.keys(expectedOutput).length;
+    const studentKeyCount = Object.keys(studentJson).length;
+
+    if (studentKeyCount === expectedKeyCount) {
+        return true;
+    } else {
+        errors.push(`WRONG KEY COUNT: Expected ${expectedKeyCount} keys, got ${studentKeyCount}`);
+        return false;
     }
+}
 
-    // Step 3: Check values for existing keys
-    for (const [key, expectedValue] of Object.entries(expectedOutput)) {
-        if (key in studentJson) {
-            const studentValue = studentJson[key];
-            if (studentValue === expectedValue) {
-                score++;
-            } else {
-                errors.push(`WRONG VALUE: '${key}' = '${studentValue}' (expected: '${expectedValue}')`);
-            }
-        }
-    }
-
-    // Step 4: Check for extra keys (warning only)
+/**
+ * Test 3: Check for extra (unexpected) keys
+ */
+function testNoExtraKeys(studentJson, expectedOutput, errors) {
     const studentKeys = new Set(Object.keys(studentJson));
     const expectedKeys = new Set(Object.keys(expectedOutput));
     const extraKeys = [...studentKeys].filter(key => !expectedKeys.has(key));
 
-    if (extraKeys.length > 0) {
-        errors.push(`WARNING: Extra keys found: ${extraKeys.join(', ')}`);
+    if (extraKeys.length === 0) {
+        return true;
+    } else {
+        errors.push(`EXTRA KEYS: ${extraKeys.join(', ')}`);
+        return false;
+    }
+}
+
+/**
+ * Test 4+: Check each field value
+ */
+function testFieldValues(studentJson, expectedOutput, errors) {
+    let correctValues = 0;
+
+    for (const [key, expectedValue] of Object.entries(expectedOutput)) {
+        if (key in studentJson) {
+            const studentValue = studentJson[key];
+            if (studentValue === expectedValue) {
+                correctValues++;
+            } else {
+                errors.push(`WRONG VALUE: '${key}' = '${studentValue}' (expected: '${expectedValue}')`);
+            }
+        } else {
+            errors.push(`MISSING KEY: '${key}' not found in response`);
+        }
     }
 
-    // Determine if passed
-    const passed = score === maxScore;
+    return correctValues;
+}
 
-    return { passed, score, errors };
+/**
+ * Main evaluation function
+ */
+function evaluateJsonResponse(studentOutput, expectedOutput) {
+    const errors = [];
+    let testsPassed = 0;
+    const totalTests = 3 + Object.keys(expectedOutput).length;
+
+    // Test 1: Valid JSON format
+    const { passed: jsonValid, studentJson } = testValidJsonFormat(studentOutput, errors);
+    if (!jsonValid) {
+        return { passed: false, score: 0, total: totalTests, errors };
+    }
+    testsPassed++;
+
+    // Test 2: Correct number of keys
+    if (testCorrectKeyCount(studentJson, expectedOutput, errors)) {
+        testsPassed++;
+    }
+
+    // Test 3: No extra keys
+    if (testNoExtraKeys(studentJson, expectedOutput, errors)) {
+        testsPassed++;
+    }
+
+    // Tests 4+: Each field value is correct
+    const correctValues = testFieldValues(studentJson, expectedOutput, errors);
+    testsPassed += correctValues;
+
+    // Determine if passed (100% of tests)
+    const passed = testsPassed === totalTests;
+
+    return { passed, score: testsPassed, total: totalTests, errors };
 }
 
 function main() {
-    const fs = require('fs');
-    const path = require('path');
-
     // Expected output for easy/problem-1
     const expectedOutput = {
-        "nombre_evento": "Feria de empleo",
-        "fecha_iso": "2025-10-17",
-        "hora_inicio_24h": "15:00",
+        "nombre_evento": "Feria de empleo de la ORT",
+        "fecha": "2025-10-17",
+        "hora_inicio": "15:00",
         "ciudad": "Montevideo",
         "stand": "21",
         "email_contacto": "people@crunchloop.io"
     };
 
-    // Path to the student's output file
-    const outputFilePath = path.join(__dirname, '..', 'outputs', 'problem-1-output.json');
+    // Read student output from stdin
+    let studentOutput = '';
 
-    // Read student output from file
-    let studentOutput;
-    try {
-        if (!fs.existsSync(outputFilePath)) {
-            console.error(`ERROR: Output file not found at ${outputFilePath}`);
-            process.exit(1);
-        }
-        studentOutput = fs.readFileSync(outputFilePath, 'utf8');
-    } catch (err) {
-        console.error(`ERROR: Failed to read output file - ${err.message}`);
+    process.stdin.setEncoding('utf8');
+
+    process.stdin.on('data', (chunk) => {
+        studentOutput += chunk;
+    });
+
+    process.stdin.on('end', () => {
+        // Evaluate the response
+        const { passed, score, total } = evaluateJsonResponse(studentOutput, expectedOutput);
+        const percentage = Math.round((score / total) * 100);
+
+        // Output JSON result
+        const result = {
+            "problem": "problem-1",
+            "passed": passed,
+            "score": score,
+            "total": total,
+            "percentage": percentage
+        };
+
+        console.log(JSON.stringify(result, null, 2));
+
+        // Exit with appropriate code (0 for pass, 1 for fail)
+        process.exit(passed ? 0 : 1);
+    });
+
+    process.stdin.on('error', (err) => {
+        console.error(`ERROR: Failed to read input - ${err.message}`);
         process.exit(1);
-    }
-
-    // Evaluate the response
-    const { passed } = evaluateJsonResponse(studentOutput, expectedOutput);
-
-    // Output JSON result
-    const result = {
-        "problem": "problem-1",
-        "passed": passed
-    };
-
-    console.log(JSON.stringify(result, null, 2));
-
-    // Exit with appropriate code (0 for pass, 1 for fail)
-    process.exit(passed ? 0 : 1);
+    });
 }
 
 // Run the evaluation
