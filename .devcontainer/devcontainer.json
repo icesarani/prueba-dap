@@ -3,14 +3,14 @@
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "dockerDashComposeVersion": "v2"
-    },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
     }
   },
+
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
 
   "postCreateCommand": "bash .devcontainer/post-create.sh",
 
