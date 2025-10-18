@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: hardlevel-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: hardlevel
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: hardlevel-app
+    ports:
+      - "3000:3000"
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/hardlevel
+      NODE_ENV: development
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+
+  test:
+    build: .
+    container_name: hardlevel-test
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/hardlevel_test
+      NODE_ENV: test
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./app:/app
+      - ./tests:/app/tests
+      - ./jest.config.js:/app/jest.config.js
+      - ./results:/app/results
+      - /app/node_modules
+    command: npm test
+    profiles:
+      - test
+
+volumes:
+  mongodb_data:

@@ -44,7 +44,36 @@ dap-ort-fair-challenges/
 │   ├── docker-compose.yml      # Docker orchestration
 │   ├── Makefile                # Build and test automation
 │   └── INSTRUCTION.md          # Detailed evaluation instructions
-├── hard/                        # Hard level problems (empty)
+├── hard/                        # Hard level bug-fixing problems
+│   ├── app/
+│   │   ├── models/              # Mongoose models
+│   │   │   ├── User.js
+│   │   │   └── Product.js
+│   │   ├── routes/              # API routes with bugs
+│   │   │   ├── users.js
+│   │   │   └── products.js
+│   │   ├── server.js            # Express server
+│   │   └── package.json
+│   ├── tests/                   # Jest test suites
+│   │   ├── problem-1.test.js
+│   │   ├── problem-2.test.js
+│   │   └── problem-3.test.js
+│   ├── problems/
+│   │   ├── problem-1.md         # Usuario no encontrado
+│   │   ├── problem-2.md         # Error al crear producto
+│   │   └── problem-3.md         # Actualización de stock incorrecta
+│   ├── solutions/
+│   │   ├── solution-1.md        # Fix for problem 1
+│   │   ├── solution-2.md        # Fix for problem 2
+│   │   └── solution-3.md        # Fix for problem 3
+│   ├── users/                   # Student submission tracking
+│   ├── results/                 # Test results output
+│   ├── docker-compose.yml       # Docker orchestration
+│   ├── Dockerfile               # Node.js app container
+│   ├── evaluate.sh              # Evaluation script
+│   ├── Makefile                 # Build and test automation
+│   ├── jest.config.js           # Jest configuration
+│   └── INSTRUCTION.md           # Detailed evaluation instructions
 └── CLAUDE.md                    # This file
 ```
 
@@ -60,8 +89,10 @@ dap-ort-fair-challenges/
 2. **problem-2**: "Department Salary Analysis" - Find employees earning above their department's average
 3. **problem-3**: "Course Enrollment Analysis" - Identify courses over 50% capacity
 
-### Hard Level
-- No problems defined yet
+### Hard Level (Bug Fixing Challenges)
+1. **problem-1**: "Usuario no encontrado" - Fix GET /api/users/:id endpoint that always returns 404
+2. **problem-2**: "Error al crear producto" - Fix POST /api/products endpoint that crashes
+3. **problem-3**: "Actualización de stock incorrecta" - Fix PATCH /api/products/:id/stock that doesn't update
 
 ## How to Use the DAP-ORT Agent
 
@@ -108,6 +139,16 @@ Dame los 5 clientes que más gastaron en órdenes completadas
 <variant>problem-1</variant>
 ```
 
+### Example Usage - Hard Level
+```xml
+<prompt>
+En el archivo routes/users.js, en el endpoint GET /:id, cambia User.findOne() por User.findById(userId) y agrega await antes de la llamada. También agrega un bloque try-catch alrededor de todo el código del endpoint para manejar errores y devolver status 500 si hay un error.
+</prompt>
+
+<level>hard</level>
+<variant>problem-1</variant>
+```
+
 ## Evaluation Workflow
 
 ### Easy Level Workflow
@@ -132,6 +173,21 @@ Dame los 5 clientes que más gastaron en órdenes completadas
 7. **Saves results** to `medium/results/test_results_<timestamp>.json`
 
 **Important**: The agent translates prompts LITERALLY, not intelligently. Vague prompts will fail evaluation, teaching students to be more specific.
+
+### Hard Level Workflow (Bug Fixing)
+1. **Student submits natural language instructions** describing how to fix the bug
+2. **Agent reads problem file** from `hard/problems/{variant}.md`
+3. **Agent applies code changes LITERALLY** based on student's instructions (following INSTRUCTION.md rules)
+4. **Agent modifies application files** in `hard/app/`
+5. **Docker environment runs**:
+   - Builds the Node.js application
+   - Starts MongoDB database
+   - Executes Jest test suite for the specific problem
+   - Compares actual behavior with expected behavior
+6. **Returns evaluation** with pass/fail, score, and detailed test results
+7. **Saves results** to `hard/results/{variant}_result.json`
+
+**Important**: The agent applies changes LITERALLY, not intelligently. Vague instructions result in incomplete fixes that fail tests, teaching students to be precise and thorough.
 
 ## Evaluation Scripts
 
@@ -193,6 +249,54 @@ make clean
 - User: `sa`
 - Password: `YourStrong@Passw0rd`
 
+### Hard Level Bug Fixing Evaluation
+The hard level uses a Docker-based system with Jest testing:
+
+**Components**:
+- **MongoDB**: MongoDB 7.0 database running in Docker
+- **Node.js App**: Express API with intentional bugs
+- **Jest Tests**: Automated test suites validating bug fixes
+- **Evaluation Script**: Bash script that runs tests and parses results
+
+**Running Tests**:
+```bash
+cd hard
+
+# Initialize environment (start MongoDB)
+make init
+
+# Build Docker images
+make build
+
+# Run all tests
+make test
+
+# Run individual problem tests
+make test-problem-1
+make test-problem-2
+make test-problem-3
+
+# Start application for manual testing
+make start
+
+# View logs
+make logs
+
+# Stop environment
+make stop
+
+# Clean up
+make clean
+
+# Reset database
+make reset
+```
+
+**Environment**:
+- Database: `hardlevel` (test: `hardlevel_test`)
+- Server: `localhost:3000`
+- MongoDB: `localhost:27017`
+
 ## Adding New Problems
 
 ### Easy Level Problems
@@ -235,6 +339,41 @@ make clean
 4. **Test the problem**:
    ```bash
    cd medium
+   make init
+   make build
+   make test-problem-{n}
+   ```
+
+### Hard Level Bug Fixing Problems
+
+1. **Create problem file**: `hard/problems/problem-{n}.md`
+   - Describe the bug symptoms
+   - Show compilation errors (if any)
+   - Show runtime errors or unexpected behavior
+   - Include curl examples showing the issue
+   - Provide expected vs actual responses
+   - List all tests that should pass
+
+2. **Add bug to application**: `hard/app/routes/*.js`
+   - Implement the buggy code
+   - Make it subtle but pedagogically valuable
+   - Ensure bug is reproducible
+
+3. **Create test suite**: `hard/tests/problem-{n}.test.js`
+   - Write comprehensive Jest tests
+   - Test happy paths and edge cases
+   - Include compilation check
+   - Validate all requirements
+
+4. **Create solution documentation**: `hard/solutions/solution-{n}.md`
+   - Show buggy code
+   - Show corrected code
+   - Explain all necessary changes
+   - List specific modifications needed
+
+5. **Test the problem**:
+   ```bash
+   cd hard
    make init
    make build
    make test-problem-{n}
@@ -296,6 +435,40 @@ make test
 make test-problem-1
 ```
 
+### Hard Level (Docker-based Bug Fixing)
+The hard level uses Docker for MongoDB and Jest test execution.
+
+#### Setup (first time only):
+```bash
+cd hard
+
+# Start MongoDB
+make init
+
+# Build Docker images
+make build
+```
+
+#### Run evaluations:
+```bash
+cd hard
+
+# Run evaluation for specific problem
+./evaluate.sh problem-1
+
+# Or use Makefile
+make test-problem-1
+make test-problem-2
+make test-problem-3
+```
+
+The script:
+- Builds Docker images if needed
+- Starts and waits for MongoDB to be healthy
+- Runs Jest tests for the specific problem
+- Parses test results and generates evaluation JSON
+- Saves results to `hard/results/{variant}_result.json`
+
 ## Development Commands
 
 ### Use the dap-ort agent:
@@ -335,6 +508,26 @@ The medium level uses a containerized environment for consistent SQL evaluation:
 **Health Checks**:
 - SQL Server has automated health checks to ensure it's ready before tests run
 
+### Hard Level
+The hard level uses a containerized environment for bug fixing evaluation:
+
+**Services**:
+- `mongodb`: MongoDB 7.0 database
+- `app`: Node.js/Express application (for manual testing)
+- `test`: Jest test runner (runs with `--profile test`)
+
+**Volumes**:
+- `./app`: Application code (mounted for live editing)
+- `./tests`: Jest test suites
+- `./results`: Test results output
+- `/app/node_modules`: Excluded to use container's node_modules
+
+**Networks**:
+- Default bridge network for service communication
+
+**Health Checks**:
+- MongoDB has automated health checks using mongosh ping
+
 ## File Naming Conventions
 
 ### Easy Level
@@ -348,3 +541,9 @@ The medium level uses a containerized environment for consistent SQL evaluation:
 - Solutions: `solution-{n}.sql` (with hyphen)
 - User files: `problem-{n}_<email>.sql` (with underscores)
 - Results: `test_results_<timestamp>.json` (with underscores)
+
+### Hard Level
+- Problems: `problems/problem-{n}.md` (with hyphen)
+- Solutions: `solutions/solution-{n}.md` (with hyphen)
+- Tests: `tests/problem-{n}.test.js` (with hyphen)
+- Results: `results/problem-{n}_result.json` (with underscores)
