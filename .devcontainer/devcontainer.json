@@ -11,7 +11,8 @@
     },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
-    }
+    },
+    "ghcr.io/crunchloop/dap/devcontainers-features/dap:latest": {}
   },
 
   "postCreateCommand": "bash .devcontainer/post-create.sh",
