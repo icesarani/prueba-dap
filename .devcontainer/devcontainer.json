@@ -1,0 +1,38 @@
+{
+  "name": "DAP-ORT Evaluation Environment",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "workspace",
+  "workspaceFolder": "/workspace",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "forwardPorts": [1433, 27017, 3000],
+
+  "portsAttributes": {
+    "1433": {
+      "label": "SQL Server"
+    },
+    "27017": {
+      "label": "MongoDB"
+    },
+    "3000": {
+      "label": "Hard Level App"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": []
+    }
+  }
+}

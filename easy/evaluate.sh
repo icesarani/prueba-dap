@@ -49,12 +49,6 @@ if [ ! -f "$FILE_PATH" ]; then
     exit 1
 fi
 
-# Build the Docker image if needed using docker-compose
+# Run the evaluation using docker-compose (image should be pre-built)
 cd "$SCRIPT_DIR"
-docker-compose build > /dev/null 2>&1
-
-# Get the relative path from SCRIPT_DIR for docker volume mount
-RELATIVE_PATH="${FILE_PATH#$SCRIPT_DIR/}"
-
-# Run the evaluation using docker-compose
 cat "$FILE_PATH" | docker-compose --profile test run --rm evaluator "/app/evaluation-scripts/$VARIANT.js"

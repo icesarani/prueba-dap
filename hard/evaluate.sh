@@ -31,30 +31,8 @@ fi
 # Create results directory if it doesn't exist
 mkdir -p results
 
-# Build the Docker image if needed
-echo "Building Docker image..." >&2
-docker-compose build test > /dev/null 2>&1
-
-# Ensure MongoDB is running and healthy
-echo "Starting MongoDB..." >&2
-docker-compose up -d mongodb > /dev/null 2>&1
-
-# Wait for MongoDB to be healthy
-echo "Waiting for MongoDB to be ready..." >&2
-MAX_WAIT=30
-WAIT_COUNT=0
-while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
-  if docker-compose ps mongodb | grep -q "healthy"; then
-    break
-  fi
-  sleep 1
-  WAIT_COUNT=$((WAIT_COUNT + 1))
-done
-
-if [ $WAIT_COUNT -eq $MAX_WAIT ]; then
-  echo '{"error": "MongoDB failed to start"}' >&2
-  exit 1
-fi
+# MongoDB should already be running from devcontainer
+# Test runner image should already be built from devcontainer
 
 # Run the specific test file
 echo "Running tests for $PROBLEM..." >&2
@@ -147,11 +125,19 @@ for i in "${!TEST_DETAILS[@]}"; do
 done
 TESTS_JSON+="]"
 
-# Generate simple result JSON with only percentage
+# Generate result JSON with all required fields
 RESULT=$(jq -n \
+  --arg problem "$PROBLEM" \
+  --argjson passed "$ALL_PASSED" \
+  --argjson score "$PASSED_TESTS" \
+  --argjson total "$TOTAL_TESTS" \
   --argjson percentage "$PERCENTAGE" \
   '{
-    score: $percentage
+    problem: $problem,
+    passed: $passed,
+    score: $score,
+    total: $total,
+    percentage: $percentage
   }')
 
 # Output result to stdout
