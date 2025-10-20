@@ -3,8 +3,8 @@
 help:
 	@echo "SQL Practice Platform - Available Commands:"
 	@echo ""
-	@echo "  make start          - Start SQL Server container"
-	@echo "  make stop           - Stop SQL Server container"
+	@echo "  make start          - Start PostgreSQL container"
+	@echo "  make stop           - Stop PostgreSQL container"
 	@echo "  make init           - Initialize database with sample data"
 	@echo "  make build          - Build test runner Docker image"
 	@echo "  make test           - Run all tests (via Docker, no local .NET needed)"
@@ -16,22 +16,18 @@ help:
 	@echo ""
 
 start:
-	@echo "Starting SQL Server..."
+	@echo "Starting PostgreSQL..."
 	docker-compose up -d
-	@echo "Waiting for SQL Server to be ready..."
-	@sleep 15
-	@echo "SQL Server is ready!"
+	@echo "Waiting for PostgreSQL to be ready..."
+	@sleep 5
+	@echo "PostgreSQL is ready!"
 
 stop:
-	@echo "Stopping SQL Server..."
+	@echo "Stopping PostgreSQL..."
 	docker-compose down
 
 init: start
-	@echo "Initializing database..."
-	docker exec sql-practice-db /opt/mssql-tools18/bin/sqlcmd \
-		-S localhost -U sa -P "YourStrong@Passw0rd" \
-		-i /scripts/init-db.sql -C
-	@echo "Database initialized successfully!"
+	@echo "PostgreSQL initialized automatically with sample data!"
 
 build:
 	@echo "Building test runner Docker image..."

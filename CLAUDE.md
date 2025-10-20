@@ -207,19 +207,19 @@ Scripts provide:
 The SQL evaluation uses a Docker-based system:
 
 **Components**:
-- **SQL Server**: Microsoft SQL Server 2022 running in Docker
+- **PostgreSQL**: PostgreSQL 16 running in Docker
 - **Test Runner**: C# application that executes and compares SQL queries
-- **Init Script**: Populates database with test data
+- **Init Script**: Populates database with test data (runs automatically on first start)
 - **Solution Scripts**: Reference solutions for comparison
 
 **Running Tests**:
 ```bash
 cd medium
 
-# Start SQL Server
+# Start PostgreSQL
 make start
 
-# Initialize database with sample data
+# Initialize database with sample data (automatic on first start)
 make init
 
 # Build test runner Docker image
@@ -244,10 +244,10 @@ make clean
 ```
 
 **Environment**:
-- Database: `SqlPracticeDB`
-- Server: `localhost:1433`
-- User: `sa`
-- Password: `YourStrong@Passw0rd`
+- Database: `sqlpracticedb`
+- Server: `localhost:5432`
+- User: `postgres`
+- Password: `postgres`
 
 ### Hard Level Bug Fixing Evaluation
 The hard level uses a Docker-based system with Jest testing:
@@ -411,13 +411,13 @@ The script:
 - Outputs results to stdout
 
 ### Medium Level (Docker-based SQL)
-The medium level uses Docker for SQL Server and test execution.
+The medium level uses Docker for PostgreSQL and test execution.
 
 #### Setup (first time only):
 ```bash
 cd medium
 
-# Start SQL Server and initialize database
+# Start PostgreSQL and initialize database (database initializes automatically)
 make init
 
 # Build test runner
@@ -493,11 +493,11 @@ The script:
 The medium level uses a containerized environment for consistent SQL evaluation:
 
 **Services**:
-- `sqlserver`: SQL Server 2022 database
+- `postgres`: PostgreSQL 16 database
 - `testrunner`: C# application for running and validating queries
 
 **Volumes**:
-- `./scripts`: Database initialization scripts
+- `./scripts`: Database initialization scripts (auto-executed on first start)
 - `./users`: Student submission folder (read-only)
 - `./solution-script`: Reference solutions (read-only)
 - `./results`: Test output and results
@@ -506,7 +506,7 @@ The medium level uses a containerized environment for consistent SQL evaluation:
 - `sql-practice-network`: Bridge network for service communication
 
 **Health Checks**:
-- SQL Server has automated health checks to ensure it's ready before tests run
+- PostgreSQL has automated health checks to ensure it's ready before tests run
 
 ### Hard Level
 The hard level uses a containerized environment for bug fixing evaluation:

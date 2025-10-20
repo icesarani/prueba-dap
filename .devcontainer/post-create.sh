@@ -6,38 +6,37 @@ echo "🚀 Setting up DAP-ORT evaluation environment..."
 # Install required tools
 echo "📦 Installing tools..."
 sudo apt-get update -qq
-sudo apt-get install -y make curl &> /dev/null
+sudo apt-get install -y make curl postgresql-client netcat-openbsd &> /dev/null
 echo "✓ Tools installed"
 
-# Wait for SQL Server to be healthy
-echo "⏳ Waiting for SQL Server..."
-for i in {1..60}; do
-    if /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong@Passw0rd" -Q "SELECT 1" -C &> /dev/null; then
-        echo "✓ SQL Server is ready"
+# Wait for PostgreSQL to be healthy
+echo "⏳ Waiting for PostgreSQL..."
+for i in {1..30}; do
+    if pg_isready -h postgres -p 5432 -U postgres &> /dev/null; then
+        echo "✓ PostgreSQL is ready"
         break
     fi
-    if [ $i -eq 60 ]; then
-        echo "⚠ SQL Server did not start in time"
+    if [ $i -eq 30 ]; then
+        echo "⚠ PostgreSQL did not start in time"
     fi
     sleep 2
 done
 
-# Initialize SQL Server database
-echo "📊 Initializing SQL database..."
-/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong@Passw0rd" -i /scripts/init-db.sql -C &> /dev/null || echo "⚠ Database might already be initialized"
-echo "✓ SQL database ready"
+# PostgreSQL initializes automatically via docker-entrypoint-initdb.d
+echo "✓ PostgreSQL database initialized automatically"
 
 # Wait for MongoDB to be healthy
 echo "⏳ Waiting for MongoDB..."
-for i in {1..30}; do
-    if mongosh --eval "db.adminCommand('ping')" &> /dev/null; then
+sleep 3  # Give MongoDB a moment to fully start
+for i in {1..20}; do
+    if nc -z mongodb 27017 &> /dev/null; then
         echo "✓ MongoDB is ready"
         break
     fi
-    if [ $i -eq 30 ]; then
-        echo "⚠ MongoDB did not start in time"
+    if [ $i -eq 20 ]; then
+        echo "⚠ MongoDB did not start in time (not critical, will be available soon)"
     fi
-    sleep 2
+    sleep 1
 done
 
 # Install Node.js dependencies for easy level
@@ -77,7 +76,7 @@ chmod +x /workspace/medium/Makefile 2>/dev/null || true
 echo "✅ Environment setup complete!"
 echo ""
 echo "📊 Services running:"
-echo "  - SQL Server: localhost:1433 (user: sa, password: YourStrong@Passw0rd)"
+echo "  - PostgreSQL: localhost:5432 (user: postgres, password: postgres, database: sqlpracticedb)"
 echo "  - MongoDB: localhost:27017 (database: hardlevel)"
 echo ""
 echo "🎯 Ready to evaluate tasks!"

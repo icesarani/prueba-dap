@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using Npgsql;
 using System.Data;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -29,15 +29,15 @@ public class SQLTestRunner
 
     public SQLTestRunner()
     {
-        var serverName = Environment.GetEnvironmentVariable("SQL_SERVER") ?? "localhost";
+        var serverName = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
 
-        _connectionString = new SqlConnectionStringBuilder
+        _connectionString = new NpgsqlConnectionStringBuilder
         {
-            DataSource = $"{serverName},1433",
-            InitialCatalog = "SqlPracticeDB",
-            UserID = "sa",
-            Password = "YourStrong@Passw0rd",
-            TrustServerCertificate = true
+            Host = serverName,
+            Port = 5432,
+            Database = "sqlpracticedb",
+            Username = "postgres",
+            Password = "postgres"
         }.ConnectionString;
 
         _usersDir = Path.Combine(Directory.GetCurrentDirectory(), "users");
@@ -47,11 +47,11 @@ public class SQLTestRunner
         Directory.CreateDirectory(_resultsDir);
     }
 
-    private async Task<SqlConnection> ConnectDbAsync()
+    private async Task<NpgsqlConnection> ConnectDbAsync()
     {
         try
         {
-            var connection = new SqlConnection(_connectionString);
+            var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
             return connection;
         }
@@ -62,11 +62,11 @@ public class SQLTestRunner
         }
     }
 
-    private async Task<QueryResult> ExecuteQueryAsync(SqlConnection conn, string query)
+    private async Task<QueryResult> ExecuteQueryAsync(NpgsqlConnection conn, string query)
     {
         try
         {
-            using var command = new SqlCommand(query, conn);
+            using var command = new NpgsqlCommand(query, conn);
             using var reader = await command.ExecuteReaderAsync();
 
             var results = new List<Dictionary<string, object?>>();

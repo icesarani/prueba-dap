@@ -1,63 +1,54 @@
-IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'SqlPracticeDB')
-BEGIN
-    CREATE DATABASE SqlPracticeDB;
-END
-GO
-
-USE SqlPracticeDB;
-GO
-
-IF OBJECT_ID('dbo.OrderDetails', 'U') IS NOT NULL DROP TABLE dbo.OrderDetails;
-IF OBJECT_ID('dbo.Orders', 'U') IS NOT NULL DROP TABLE dbo.Orders;
-IF OBJECT_ID('dbo.Products', 'U') IS NOT NULL DROP TABLE dbo.Products;
-IF OBJECT_ID('dbo.Customers', 'U') IS NOT NULL DROP TABLE dbo.Customers;
-IF OBJECT_ID('dbo.Employees', 'U') IS NOT NULL DROP TABLE dbo.Employees;
-IF OBJECT_ID('dbo.Departments', 'U') IS NOT NULL DROP TABLE dbo.Departments;
-IF OBJECT_ID('dbo.Enrollments', 'U') IS NOT NULL DROP TABLE dbo.Enrollments;
-IF OBJECT_ID('dbo.Students', 'U') IS NOT NULL DROP TABLE dbo.Students;
-IF OBJECT_ID('dbo.Courses', 'U') IS NOT NULL DROP TABLE dbo.Courses;
-GO
+-- Drop tables if they exist (in correct order to handle foreign keys)
+DROP TABLE IF EXISTS OrderDetails;
+DROP TABLE IF EXISTS Orders;
+DROP TABLE IF EXISTS Products;
+DROP TABLE IF EXISTS Customers;
+DROP TABLE IF EXISTS Employees;
+DROP TABLE IF EXISTS Departments;
+DROP TABLE IF EXISTS Enrollments;
+DROP TABLE IF EXISTS Students;
+DROP TABLE IF EXISTS Courses;
 
 CREATE TABLE Customers (
     CustomerID INT PRIMARY KEY,
-    CustomerName NVARCHAR(100) NOT NULL,
-    Email NVARCHAR(100),
-    Country NVARCHAR(50)
+    CustomerName VARCHAR(100) NOT NULL,
+    Email VARCHAR(100),
+    Country VARCHAR(50)
 );
 
 CREATE TABLE Products (
     ProductID INT PRIMARY KEY,
-    ProductName NVARCHAR(100) NOT NULL,
-    Category NVARCHAR(50),
+    ProductName VARCHAR(100) NOT NULL,
+    Category VARCHAR(50),
     Price DECIMAL(10, 2),
     Stock INT
 );
 
 CREATE TABLE Orders (
     OrderID INT PRIMARY KEY,
-    CustomerID INT FOREIGN KEY REFERENCES Customers(CustomerID),
+    CustomerID INT REFERENCES Customers(CustomerID),
     OrderDate DATE,
-    Status NVARCHAR(20)
+    Status VARCHAR(20)
 );
 
 CREATE TABLE OrderDetails (
     OrderDetailID INT PRIMARY KEY,
-    OrderID INT FOREIGN KEY REFERENCES Orders(OrderID),
-    ProductID INT FOREIGN KEY REFERENCES Products(ProductID),
+    OrderID INT REFERENCES Orders(OrderID),
+    ProductID INT REFERENCES Products(ProductID),
     Quantity INT,
     UnitPrice DECIMAL(10, 2)
 );
 
 CREATE TABLE Departments (
     DepartmentID INT PRIMARY KEY,
-    DepartmentName NVARCHAR(100) NOT NULL,
+    DepartmentName VARCHAR(100) NOT NULL,
     Budget DECIMAL(12, 2)
 );
 
 CREATE TABLE Employees (
     EmployeeID INT PRIMARY KEY,
-    EmployeeName NVARCHAR(100) NOT NULL,
-    DepartmentID INT FOREIGN KEY REFERENCES Departments(DepartmentID),
+    EmployeeName VARCHAR(100) NOT NULL,
+    DepartmentID INT REFERENCES Departments(DepartmentID),
     Salary DECIMAL(10, 2),
     HireDate DATE,
     ManagerID INT NULL
@@ -65,24 +56,24 @@ CREATE TABLE Employees (
 
 CREATE TABLE Courses (
     CourseID INT PRIMARY KEY,
-    CourseName NVARCHAR(100) NOT NULL,
+    CourseName VARCHAR(100) NOT NULL,
     Credits INT,
     Capacity INT
 );
 
 CREATE TABLE Students (
     StudentID INT PRIMARY KEY,
-    StudentName NVARCHAR(100) NOT NULL,
-    Major NVARCHAR(50),
+    StudentName VARCHAR(100) NOT NULL,
+    Major VARCHAR(50),
     EnrollmentYear INT
 );
 
 CREATE TABLE Enrollments (
     EnrollmentID INT PRIMARY KEY,
-    StudentID INT FOREIGN KEY REFERENCES Students(StudentID),
-    CourseID INT FOREIGN KEY REFERENCES Courses(CourseID),
+    StudentID INT REFERENCES Students(StudentID),
+    CourseID INT REFERENCES Courses(CourseID),
     Grade DECIMAL(3, 2),
-    Semester NVARCHAR(20)
+    Semester VARCHAR(20)
 );
 
 INSERT INTO Customers (CustomerID, CustomerName, Email, Country) VALUES
@@ -157,5 +148,3 @@ INSERT INTO Enrollments (EnrollmentID, StudentID, CourseID, Grade, Semester) VAL
 (9, 5, 1, 3.9, 'Fall 2023'),
 (10, 5, 2, 3.8, 'Fall 2023'),
 (11, 5, 4, 3.7, 'Fall 2023');
-
-GO

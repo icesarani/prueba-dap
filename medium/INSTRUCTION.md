@@ -9,14 +9,14 @@ The student will provide natural language instructions (in Spanish or English) d
 - If student doesn't mention joining tables → DON'T add joins
 - If student doesn't mention specific calculations → DON'T add SUM/GROUP BY unless they said to
 - If student doesn't mention filtering → DON'T add WHERE clauses unless they specified it
-- If student says "top 5" but the problem needs "top 5 with calculation" → generate TOP 5 without calculation
+- If student says "top 5" but the problem needs "top 5 with calculation" → generate LIMIT 5 without calculation
 
 **DO NOT fill in missing details from the problem description** - The evaluation system will compare your generated SQL with the correct solution, and that's where the student learns if their prompt was good enough.
 
 **Your goal**: Make vague/incomplete prompts fail evaluation so students learn to be more specific next time.
 
 **Examples**:
-- Student: "top 5 customers by revenue" → Generate: `SELECT TOP 5 * FROM Customers ORDER BY Revenue DESC` (will FAIL evaluation ✗)
+- Student: "top 5 customers by revenue" → Generate: `SELECT * FROM Customers ORDER BY Revenue DESC LIMIT 5` (will FAIL evaluation ✗)
 - Student: "top 5 customers, sum quantity times price from OrderDetails joined with Orders on OrderID, joined with Customers on CustomerID, where status completed" → Generate complete query (will PASS evaluation ✓)
 
 ## Evaluation Process

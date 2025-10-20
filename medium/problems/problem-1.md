@@ -37,4 +37,4 @@ Maria Garcia    | maria@email.com    | 379.98
 - Usa la cláusula WHERE para filtrar por estado de la orden
 - Usa GROUP BY para agregar por cliente
 - Usa la función ROUND() para precisión decimal
-- Usa ORDER BY y TOP para obtener los 5 mejores
+- Usa ORDER BY y LIMIT para obtener los 5 mejores
