@@ -4,8 +4,6 @@ services:
   mongodb:
     image: mongo:7.0
     container_name: hardlevel-mongodb
-    ports:
-      - "27017:27017"
     environment:
       MONGO_INITDB_DATABASE: hardlevel
     volumes:
