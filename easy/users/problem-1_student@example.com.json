@@ -1,8 +1,8 @@
 {
     "nombre_evento": "Feria de empleo de la ORT",
-    "fecha": "17/10",
-    "hora": "3 pm",
+    "fecha_iso": "2025-10-17",
+    "hora_inicio_24h": "15:00",
     "ciudad": "Montevideo",
     "stand": "21",
-    "contacto": "people@crunchloop.io"
+    "email_contacto": "people@crunchloop.io"
 }
