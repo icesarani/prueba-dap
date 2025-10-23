@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 // BUG: This endpoint has a bug - it doesn't search by ID correctly
 router.get('/:id', async (req, res) => {
   const userId = req.params.id;
-  const user = User.findOne(); // Bug: no busca por ID y falta await
+  const user = await User.findById(userId);
 
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
