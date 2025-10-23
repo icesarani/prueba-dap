@@ -29,30 +29,16 @@ services:
     environment:
       - POSTGRES_HOST=postgres
     volumes:
-      - users_data:/app/users
-      - solutions_data:/app/solution-script
+      - ./users:/app/users:ro
+      - ./solution-script:/app/solution-script:ro
       - ./results:/app/results
     networks:
       - sql-practice-network
     profiles:
       - test
 
-  # Helper service to copy files into volumes
-  file_copier:
-    image: alpine:latest
-    volumes:
-      - users_data:/target/users
-      - solutions_data:/target/solutions
-      - ./users:/source/users:ro
-      - ./solution-script:/source/solutions:ro
-    command: sh -c "cp /source/users/* /target/users/ 2>/dev/null || true && cp /source/solutions/* /target/solutions/ 2>/dev/null || true"
-    profiles:
-      - setup
-
 volumes:
   postgres_data:
-  users_data:
-  solutions_data:
 
 networks:
   sql-practice-network:
